@@ -259,7 +259,7 @@ def splitcut(data):
 
 domain_list=['Anger','Happy','Sad','Neutral','Fear','Disgust']
 num_domains=len(domain_list)
-dataset_path = '/content/drive/MyDrive/Dataset/'
+dataset_path = '/content/drive/MyDrive/Dataset2/'
 all_wv=[]
 all_spec=[]
 all_data=[]
