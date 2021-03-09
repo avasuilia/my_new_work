@@ -556,8 +556,7 @@ class AdaIN(tf.keras.layers.Layer):
 
 
     def call(self, x_init, training=True, mask=None):
-        x = x_init[0]
-        style = x_init[1]
+        x, style = x_init
         x_mean, x_var = tf.nn.moments(x, axes=[1, 2], keepdims=True)
         x_std = tf.sqrt(x_var + self.epsilon)
 
@@ -566,8 +565,8 @@ class AdaIN(tf.keras.layers.Layer):
         gamma = self.gamma_fc(style)
         beta = self.beta_fc(style)
 
-        gamma = tf.reshape(gamma, shape=[1,1,self.channels])
-        beta = tf.reshape(beta, shape=[1,1,self.channels])
+        gamma = tf.reshape(gamma, shape=[-1,1,1,self.channels])
+        beta = tf.reshape(beta, shape=[-1,1,1,self.channels])
 
         x = (1 + gamma) * x_norm + beta
 
@@ -597,10 +596,10 @@ def build_generator(input_shape,style_dimen):
   g1 = conv2d(g0, 256, kernel_size=(h,3), strides=1, padding='valid')
   g2 = conv2d(g1, 256, kernel_size=(1,9), strides=(1,2))
   g3 = conv2d(g2, 256, kernel_size=(1,7), strides=(1,2))
-  g4 = AdaIN(256,name='AdaIN_1')(g3)
+  g4 = AdaIN(256,name='AdaIN_1')([g3,inpB])
   #upscaling
   g5 = deconv2d(g4,g2, 256, kernel_size=(1,7), strides=(1,2))
-  g6 = AdaIN(512,name='AdaIN_2')(g5)
+  g6 = AdaIN(512,name='AdaIN_2')([g5,inpB])
   g7 = deconv2d(g6,g1, 256, kernel_size=(1,9), strides=(1,2), bnorm=False)
   g8 = ConvSN2DTranspose(1, kernel_size=(h,1), strides=(1,1), kernel_initializer=init, padding='valid', activation='tanh')(g7)
   return Model([inpA,inpB],g8, name='G')
