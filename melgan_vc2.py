@@ -566,8 +566,8 @@ class AdaIN(tf.keras.layers.Layer):
         gamma = self.gamma_fc(style)
         beta = self.beta_fc(style)
 
-        gamma = tf.reshape(gamma, shape=[-1,1,1,self.channels])
-        beta = tf.reshape(beta, shape=[-1,1,1,self.channels])
+        gamma = tf.reshape(gamma, shape=[1,1,self.channels])
+        beta = tf.reshape(beta, shape=[1,1,self.channels])
 
         x = (1 + gamma) * x_norm + beta
 
@@ -597,11 +597,11 @@ def build_generator(input_shape,style_dimen):
   g1 = conv2d(g0, 256, kernel_size=(h,3), strides=1, padding='valid')
   g2 = conv2d(g1, 256, kernel_size=(1,9), strides=(1,2))
   g3 = conv2d(g2, 256, kernel_size=(1,7), strides=(1,2))
+  g4 = AdaIN(256,name='AdaIN_1')(g3)
   #upscaling
-  g4 = deconv2d(g3,g2, 256, kernel_size=(1,7), strides=(1,2), bnorm=False)
-  g5 = AdaIN(512,name='AdaIN_1')(g4)
-  g6 = deconv2d(g5,g1, 256, kernel_size=(1,9), strides=(1,2), bnorm=False)
-  g7 = AdaIN(512,name='AdaIN_2')(g6)
+  g5 = deconv2d(g4,g2, 256, kernel_size=(1,7), strides=(1,2))
+  g6 = AdaIN(512,name='AdaIN_2')(g5)
+  g7 = deconv2d(g6,g1, 256, kernel_size=(1,9), strides=(1,2), bnorm=False)
   g8 = ConvSN2DTranspose(1, kernel_size=(h,1), strides=(1,1), kernel_initializer=init, padding='valid', activation='tanh')(g7)
   return Model([inpA,inpB],g8, name='G')
 
@@ -954,27 +954,30 @@ def train(epochs, batch_size=16, lr=0.0001, n_save=6, gupt=5):
   c = 0
   g = 0
   
-  max_size=len(ds_all[0])
-  for i in range(1,len(ds_all)):
-    if(max_size>len(ds_all[i])):
-      max_size=len(ds_all[i])
+
   
   for epoch in range(epochs):
         bef = time.time()
         
-        # for batchi,data_list in enumerate(zip(dsa,dsb)):
-        for batchi in range(max_size):
+        batchi=0
+
+        data_list = iter(zip(*ds_all))
+
+        while(True):
+          tuple1=next(data_list,None)
+
+          tuple2=next(data_list,None)
+
+          if(tuple1 is None or  tuple2 is None):
+            break
+        
 
           for i in range(len(domain_list)):
             for j in range(len(domain_list)):
               
-              a_real=ds_all[i][batchi]
-              b_ref=ds_all[j][batchi]
-
-              if(batchi+1<len(ds_all[j])):
-                b_ref2=ds_all[j][batchi+1]
-              else:
-                b_ref2=ds_all[j][0]
+              a_real=tuple1[i]
+              b_ref=tuple1[j]
+              b_ref2=tuple2[j]
 
               b_trg=np.random.normal(size=(bs, latent_dimen))
               b_trg2=np.random.normal(size=(bs, latent_dimen))
@@ -1000,14 +1003,15 @@ def train(epochs, batch_size=16, lr=0.0001, n_save=6, gupt=5):
               c += 1
               g += 1
 
-              if batchi%600==0:
-                  print(f'[Epoch {epoch}/{epochs}] [Batch {batchi}] [D loss f: {np.mean(df_list[-g:], axis=0)} ', end='')
-                  print(f'r: {np.mean(dr_list[-g:], axis=0)}] ', end='')
-                  print(f'[G loss: {np.mean(g_list[-g:], axis=0)}] ', end='')
-                  print(f'[ID loss: {np.mean(id_list[-g:])}] ', end='')
-                  print(f'[LR: {lr}]')
-                  g = 0
-              nbatch=batchi
+          if batchi%600==0:
+              print(f'[Epoch {epoch}/{epochs}] [Batch {batchi}] [D loss f: {np.mean(df_list[-g:], axis=0)} ', end='')
+              print(f'r: {np.mean(dr_list[-g:], axis=0)}] ', end='')
+              print(f'[G loss: {np.mean(g_list[-g:], axis=0)}] ', end='')
+              print(f'[ID loss: {np.mean(id_list[-g:])}] ', end='')
+              print(f'[LR: {lr}]')
+              g = 0
+          nbatch=batchi
+          batchi=batchi+1
 
         print(f'Time/Batch {(time.time()-bef)/nbatch}')
         save_end(epoch,np.mean(g_list[-n_save*c:], axis=0),np.mean(df_list[-n_save*c:], axis=0),np.mean(id_list[-n_save*c:], axis=0),n_save=n_save)
