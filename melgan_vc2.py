@@ -557,7 +557,8 @@ class AdaIN(tf.keras.layers.Layer):
 
 
     def call(self, x_init, training=True, mask=None):
-        x, style = x_init
+        x = x_init[0]
+        style = x_init[1]
         x_mean, x_var = tf.nn.moments(x, axes=[1, 2], keepdims=True)
         x_std = tf.sqrt(x_var + self.epsilon)
 
