@@ -547,13 +547,12 @@ def deconv2d(layer_input, layer_res, filters, kernel_size=4, conc=True, scalev=F
   return u
 
 class AdaIN(tf.keras.layers.Layer):
-    def __init__(self, units, shape, epsilon=1e-5, name='AdaIN'):
+    def __init__(self, channels, epsilon=1e-5, name='AdaIN'):
         super(AdaIN, self).__init__(name=name)
         self.epsilon = epsilon
-        self.units = units
-        self.shape = shape
-        self.gamma_fc = Dense(self.units, use_bias=True)
-        self.beta_fc = Dense(self.units, use_bias=True)
+        self.channels = channels
+        self.gamma_fc = Dense(self.channels, use_bias=True)
+        self.beta_fc = Dense(self.channels, use_bias=True)
 
 
     def call(self, x_init, training=True, mask=None):
@@ -567,8 +566,8 @@ class AdaIN(tf.keras.layers.Layer):
         gamma = self.gamma_fc(style)
         beta = self.beta_fc(style)
 
-        gamma = tf.reshape(gamma, shape=self.shape)
-        beta = tf.reshape(beta, shape=self.shape)
+        gamma = tf.reshape(gamma, shape=[-1,1,1,self.channels])
+        beta = tf.reshape(beta, shape=[-1,1,1,self.channels])
 
         x = (1 + gamma) * x_norm + beta
 
@@ -600,9 +599,9 @@ def build_generator(input_shape,style_dimen):
   g3 = conv2d(g2, 256, kernel_size=(1,7), strides=(1,2))
   #upscaling
   g4 = deconv2d(g3,g2, 256, kernel_size=(1,7), strides=(1,2), bnorm=False)
-  g5 = AdaIN(512,[-1,1,1,512],name='AdaIN_1')(g4)
+  g5 = AdaIN(512,name='AdaIN_1')(g4)
   g6 = deconv2d(g5,g1, 256, kernel_size=(1,9), strides=(1,2), bnorm=False)
-  g7 = AdaIN(512,[-1,1,1,512],name='AdaIN_2')(g6)
+  g7 = AdaIN(512,name='AdaIN_2')(g6)
   g8 = ConvSN2DTranspose(1, kernel_size=(h,1), strides=(1,1), kernel_initializer=init, padding='valid', activation='tanh')(g7)
   return Model([inpA,inpB],g8, name='G')
 
