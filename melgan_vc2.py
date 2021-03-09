@@ -9,6 +9,7 @@ Original file is located at
 <a href="https://colab.research.google.com/github/marcoppasini/MelGAN-VC/blob/master/MelGAN_VC.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
 """
 
+from __future__ import print_function, division
 # Commented out IPython magic to ensure Python compatibility.
 #We'll be using TF 2.1 and torchaudio
 
@@ -43,7 +44,6 @@ import tensorflow as tf
 # !ls
 #Imports
 
-from __future__ import print_function, division
 from glob import glob
 import scipy
 import soundfile as sf
