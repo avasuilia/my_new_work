@@ -594,7 +594,7 @@ def build_generator(input_shape,style_dimen):
   inpA = Input(shape=input_shape)
   inpB = Input(shape=(style_dimen,))
   #downscaling
-  g0 = tf.keras.layers.ZeroPadding2D((0,1))(inp)
+  g0 = tf.keras.layers.ZeroPadding2D((0,1))(inpA)
   g1 = conv2d(g0, 256, kernel_size=(h,3), strides=1, padding='valid')
   g2 = conv2d(g1, 256, kernel_size=(1,9), strides=(1,2))
   g3 = conv2d(g2, 256, kernel_size=(1,7), strides=(1,2))
