@@ -549,7 +549,6 @@ def deconv2d(layer_input, layer_res, filters, kernel_size=4, conc=True, scalev=F
 class AdaIN(tf.keras.layers.Layer):
     def __init__(self, units, shape, epsilon=1e-5, name='AdaIN'):
         super(AdaIN, self).__init__(name=name)
-        self.channels = channels
         self.epsilon = epsilon
         self.units = units
         self.shape = shape
