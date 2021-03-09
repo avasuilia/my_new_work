@@ -829,7 +829,7 @@ def train_all(a,b,i,j,refs=None,trgs=None):
   aa,aa2,aa3 = extract_image(a) 
   bb,bb2,bb3 = extract_image(b)
 
-  with tf.GradientTape() as tape_gen, tf.GradientTape() as tape_disc:
+  with tf.GradientTape(persistent=True) as tape_gen, tf.GradientTape() as tape_disc:
 
     if trgs is not None:
       trg,trg2=trgs
@@ -902,7 +902,7 @@ def train_all(a,b,i,j,refs=None,trgs=None):
   grad_disc = tape_disc.gradient(loss_d, critic.trainable_variables)
   opt_disc.apply_gradients(zip(grad_disc, critic.trainable_variables))
 
-  if z_trgs is not None:
+  if trgs is not None:
     f_train_variable = mapping_network.trainable_variables
     e_train_variable = style_encoder.trainable_variables
 
@@ -920,7 +920,7 @@ def train_d(a,b,i,j,ref=None,trg=None):
   aa,aa2,aa3 = extract_image(a)
   with tf.GradientTape() as tape_disc:
 
-    if trgs is not None:
+    if trg is not None:
       s_trg = mapping_network([trg,j])
     else:
       s_trg = style_encoder([ref,j])
@@ -982,20 +982,22 @@ def train(epochs, batch_size=16, lr=0.0001, n_save=6, gupt=5):
               b_trg=np.random.normal(size=(bs, latent_dimen))
               b_trg2=np.random.normal(size=(bs, latent_dimen))
 
-              ilist=[[i] for ko in range(bs)]
-              jlist=[[j] for ko in range(bs)]
+              ilist=np.array([[i] for ko in range(bs)])
+              jlist=np.array([[j] for ko in range(bs)])
 
               if batchi%gupt==0:
-                dloss_t1,dloss_f1,gloss1,idloss1 = train_all(a_real,b_ref,ilist,jlist,refs=[b_ref,b_ref2])
                 dloss_t2,dloss_f2,gloss2,idloss2 = train_all(a_real,b_ref,ilist,jlist,trgs=[b_trg,b_trg2])
+                dloss_t1,dloss_f1,gloss1,idloss1 = train_all(a_real,b_ref,ilist,jlist,refs=[b_ref,b_ref2])
+                
                 dloss_t=np.mean([dloss_t1,dloss_t2])
                 dloss_f=np.mean([dloss_f1,dloss_f2])
                 gloss=np.mean([gloss1,gloss2])
                 idloss=np.mean([idloss1,idloss2])
 
               else:
-                dloss_t1,dloss_f1 = train_d(a_real,b_ref,ilist,jlist,ref=b_ref2)
                 dloss_t2,dloss_f2 = train_d(a_real,b_ref,ilist,jlist,trg=b_trg)
+                dloss_t1,dloss_f1 = train_d(a_real,b_ref,ilist,jlist,ref=b_ref2)
+                
                 dloss_t=np.mean([dloss_t1,dloss_t2])
                 dloss_f=np.mean([dloss_f1,dloss_f2])
 
