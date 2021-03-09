@@ -832,7 +832,7 @@ def train_all(a,b,i,j,refs=None,trgs=None):
 
     if trgs is not None:
       trg,trg2=trgs
-    if refs in not None:
+    if refs is not None:
       ref,ref2=refs
 
     if trgs is not None:
