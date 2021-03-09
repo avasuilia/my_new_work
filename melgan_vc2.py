@@ -742,7 +742,8 @@ def save_test_image_full(path):
   a,jj = testgena()
   print(a.shape)
   trg=np.random.normal(size=(a.shape[0],latent_dimen))
-  s_trg = mapping_network([trg,jj], training=False)
+  jjlist=[[jj] for ko in range(a.shape[0])]
+  s_trg = mapping_network([trg,jjlist], training=False)
   ab = gen([a,s_trg], training=False)
   ab = testass(ab)
   a = testass(a)
@@ -981,17 +982,20 @@ def train(epochs, batch_size=16, lr=0.0001, n_save=6, gupt=5):
               b_trg=np.random.normal(size=(bs, latent_dimen))
               b_trg2=np.random.normal(size=(bs, latent_dimen))
 
+              ilist=[[i] for ko in range(bs)]
+              jlist=[[j] for ko in range(bs)]
+
               if batchi%gupt==0:
-                dloss_t1,dloss_f1,gloss1,idloss1 = train_all(a_real,b_ref,i,j,refs=[b_ref,b_ref2])
-                dloss_t2,dloss_f2,gloss2,idloss2 = train_all(a_real,b_ref,i,j,trgs=[b_trg,b_trg2])
+                dloss_t1,dloss_f1,gloss1,idloss1 = train_all(a_real,b_ref,ilist,jlist,refs=[b_ref,b_ref2])
+                dloss_t2,dloss_f2,gloss2,idloss2 = train_all(a_real,b_ref,ilist,jlist,trgs=[b_trg,b_trg2])
                 dloss_t=np.mean([dloss_t1,dloss_t2])
                 dloss_f=np.mean([dloss_f1,dloss_f2])
                 gloss=np.mean([gloss1,gloss2])
                 idloss=np.mean([idloss1,idloss2])
 
               else:
-                dloss_t1,dloss_f1 = train_d(a_real,b_ref,i,j,ref=b_ref2)
-                dloss_t2,dloss_f2 = train_d(a_real,b_ref,i,j,trg=b_trg)
+                dloss_t1,dloss_f1 = train_d(a_real,b_ref,ilist,jlist,ref=b_ref2)
+                dloss_t2,dloss_f2 = train_d(a_real,b_ref,ilist,jlist,trg=b_trg)
                 dloss_t=np.mean([dloss_t1,dloss_t2])
                 dloss_f=np.mean([dloss_f1,dloss_f2])
 
