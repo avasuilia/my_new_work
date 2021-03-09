@@ -600,9 +600,11 @@ def build_generator(input_shape,style_dimen):
   g3 = conv2d(g2, 256, kernel_size=(1,7), strides=(1,2))
   #upscaling
   g4 = deconv2d(g3,g2, 256, kernel_size=(1,7), strides=(1,2), bnorm=False)
-  g5 = deconv2d(g4,g1, 256, kernel_size=(1,9), strides=(1,2), bnorm=False)
-  g6 = ConvSN2DTranspose(1, kernel_size=(h,1), strides=(1,1), kernel_initializer=init, padding='valid', activation='tanh')(g5)
-  return Model([inpA,inpB],g6, name='G')
+  g5 = AdaIN(6144,[-1,1,12,512],name='AdaIN_1')(g4)
+  g6 = deconv2d(g5,g1, 256, kernel_size=(1,9), strides=(1,2), bnorm=False)
+  g7 = AdaIN(12288,[-1,1,24,512],name='AdaIN_2')(g6)
+  g8 = ConvSN2DTranspose(1, kernel_size=(h,1), strides=(1,1), kernel_initializer=init, padding='valid', activation='tanh')(g7)
+  return Model([inpA,inpB],g8, name='G')
 
 #Siamese Network
 def build_siamese(input_shape):
@@ -629,7 +631,7 @@ def build_critic(input_shape,num_domains):
     x.append(DenseSN(1, kernel_initializer=init)(g4))
 
   x = tf.stack(x, axis=1) # [bs, num_domains, 1]
-  x = tf.gather(x, inpB, axis=1, batch_dims=-1) # [bs, 1, 1]
+  x = tf.gather(x, int(inpB), axis=1, batch_dims=-1) # [bs, 1, 1]
   x = tf.squeeze(x, axis=1)
 
   # x = x[:, domain, :] # [bs, 1]
@@ -649,7 +651,7 @@ def build_style_encoder(input_shape,num_domains,style_dimen):
     x.append(Dense(style_dimen, kernel_initializer=init)(g4))
 
   x = tf.stack(x, axis=1) # [bs, num_domains, style_dimen]
-  x = tf.gather(x, inpB, axis=1, batch_dims=-1) # [bs, 1, style_dimen]
+  x = tf.gather(x, int(inpB), axis=1, batch_dims=-1) # [bs, 1, style_dimen]
   x = tf.squeeze(x, axis=1)
 
   # x = x[:, domain, :] # [bs, style_dimen]
@@ -679,7 +681,7 @@ def build_mapping_network(latent_dimen,num_domains,style_dimen):
     x.append(Dense(style_dimen,kernel_initializer=init)(g14))
 
   x = tf.stack(x, axis=1)
-  x = tf.gather(x, inpB, axis=1, batch_dims=-1)
+  x = tf.gather(x, int(inpB), axis=1, batch_dims=-1)
   x = tf.squeeze(x, axis=1)
 
   return Model([inpA,inpB], x, name='M_N')
