@@ -715,9 +715,9 @@ def build():
 #Generate a random batch to display current training results
 def testgena():
   sw = True
-  ii=random.randint(0, num_domains)
+  ii=random.randint(0, num_domains-1)
   print('Domain A: '+domain_list[ii])
-  jj=random.randint(0, num_domains)
+  jj=random.randint(0, num_domains-1)
   if(ii==jj):
     jj=(jj+1)%5
   print('Domain B: '+domain_list[jj])
@@ -762,7 +762,7 @@ def save_test_image_full(path):
   plt.show()
 
 #Save in training loop
-def save_end(epoch,gloss,closs,mloss,n_save=3,save_path='../content/'):                 #use custom save_path (i.e. Drive '../content/drive/My Drive/')
+def save_end(epoch,gloss,closs,mloss,n_save=3,save_path='/content'):                 #use custom save_path (i.e. Drive '../content/drive/My Drive/')
   if epoch % n_save == 0:
     print('Saving...')
     path = f'{save_path}/MELGANVC-{str(gloss)[:9]}-{str(closs)[:9]}-{str(mloss)[:9]}'
@@ -960,6 +960,7 @@ def train(epochs, batch_size=16, lr=0.0001, n_save=6, gupt=5):
         bef = time.time()
         
         batchi=0
+        batchii=0
 
         data_list = iter(zip(*ds_all))
 
@@ -974,6 +975,9 @@ def train(epochs, batch_size=16, lr=0.0001, n_save=6, gupt=5):
 
           for i in range(len(domain_list)):
             for j in range(len(domain_list)):
+
+              if(i==j):
+                continue
               
               a_real=tuple1[i]
               b_ref=tuple1[j]
@@ -985,7 +989,7 @@ def train(epochs, batch_size=16, lr=0.0001, n_save=6, gupt=5):
               ilist=np.array([[i] for ko in range(bs)])
               jlist=np.array([[j] for ko in range(bs)])
 
-              if batchi%gupt==0:
+              if batchii%gupt==0:
                 dloss_t2,dloss_f2,gloss2,idloss2 = train_all(a_real,b_ref,ilist,jlist,trgs=[b_trg,b_trg2])
                 dloss_t1,dloss_f1,gloss1,idloss1 = train_all(a_real,b_ref,ilist,jlist,refs=[b_ref,b_ref2])
                 
@@ -1007,6 +1011,8 @@ def train(epochs, batch_size=16, lr=0.0001, n_save=6, gupt=5):
               id_list.append(idloss)
               c += 1
               g += 1
+
+              batchii=batchii+1
 
           if batchi%600==0:
               print(f'[Epoch {epoch}/{epochs}] [Batch {batchi}] [D loss f: {np.mean(df_list[-g:], axis=0)} ', end='')
