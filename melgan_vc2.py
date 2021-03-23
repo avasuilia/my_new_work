@@ -741,8 +741,9 @@ def testgena():
 def save_test_image_full(path):
   a,jj = testgena()
   print(a.shape)
-  trg=np.random.normal(size=(a.shape[0],latent_dimen))
-  jjlist=[[jj] for ko in range(a.shape[0])]
+  trg_temp=np.random.normal(size=(latent_dimen,))
+  trg=np.array([trg_temp for ko in range(a.shape[0])])
+  jjlist=np.array([[jj] for ko in range(a.shape[0])])
   s_trg = mapping_network([trg,jjlist], training=False)
   ab = gen([a,s_trg], training=False)
   ab = testass(ab)
