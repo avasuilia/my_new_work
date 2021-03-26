@@ -251,26 +251,45 @@ def splitcut(data):
         ls.append(x[:,n*minifinal:n*minifinal+minifinal,:])
       ls.append(x[:,-minifinal:,:])
   return np.array(ls)
+
+def save_object_pickled(obj, filename):
+    with open(filename, 'wb') as output:  # Overwrites any existing file.
+        pickle.dump(obj, output)
+from os import path
 #Generating Mel-Spectrogram dataset (Uncomment where needed)
 #adata: source spectrograms
 #bdata: target spectrograms
 
 
 
-domain_list=['Anger','Happy','Sad','Neutral','Fear','Disgust']
+domain_list=['anger','happy','sad','neutral','fear','disgust']
 num_domains=len(domain_list)
-dataset_path = '/content/drive/MyDrive/Dataset2/'
-all_wv=[]
-all_spec=[]
-all_data=[]
+dataset_path = '/content/drive/MyDrive/Datasetmain/'
 
-for i in range(len(domain_list)):
-  awv= audio_array(dataset_path+domain_list[i])
-  aspec=tospec(awv)
-  adata=splitcut(aspec)
-  all_wv.append(awv)
-  all_spec.append(aspec)
-  all_data.append(adata)
+if path.exists("/content/drive/MyDrive/pickled_dataset2/pickledA.pkl") and path.exists("/content/drive/MyDrive/pickled_dataset2/pickledB.pkl") and path.exists("/content/drive/MyDrive/pickled_dataset2/pickledC.pkl"):
+  with open("/content/drive/MyDrive/pickled_dataset2/pickledA.pkl", 'rb') as input:
+    all_wv = pickle.load(input)
+  with open("/content/drive/MyDrive/pickled_dataset2/pickledB.pkl", 'rb') as input:
+    all_spec = pickle.load(input)
+  with open("/content/drive/MyDrive/pickled_dataset2/pickledC.pkl", 'rb') as input:
+    all_data = pickle.load(input)
+
+else:
+  all_wv=[]
+  all_spec=[]
+  all_data=[]
+  for i in range(len(domain_list)):
+    awv= audio_array(dataset_path+domain_list[i])
+    aspec=tospec(awv)
+    adata=splitcut(aspec)
+    all_wv.append(awv)
+    all_spec.append(aspec)
+    all_data.append(adata)
+  save_object_pickled(all_wv, "/content/drive/MyDrive/pickled_dataset2/pickledA.pkl")
+  save_object_pickled(all_spec, "/content/drive/MyDrive/pickled_dataset2/pickledB.pkl")
+  save_object_pickled(all_data, "/content/drive/MyDrive/pickled_dataset2/pickledC.pkl")
+
+
 
 #MALE1
 # awv = audio_array('../content/cmu_us_clb_arctic/wav')                               #get waveform array from folder containing wav files
@@ -1034,7 +1053,15 @@ def train(epochs, batch_size=16, lr=0.0001, n_save=6, gupt=5):
 
 #If load_model=True, specify the path where the models are saved
 
-gen,critic,siam,style_encoder,mapping_network, [opt_gen,opt_disc,f_optimizer,e_optimizer] = get_networks(shape, load_model=False, path='../content/drive/My Drive/')
+import glob
+megadirlist=sorted(glob.glob('/content/drive/MyDrive/Modelsorigin/MELGANVC*'),reverse=False)
+if(len(megadirlist)==0):
+  gen,critic,siam,style_encoder,mapping_network, [opt_gen,opt_disc,f_optimizer,e_optimizer] = get_networks(shape, load_model=False, path='')
+else:
+  pathone=megadirlist[0]
+  print(pathone)
+  gen,critic,siam,style_encoder,mapping_network, [opt_gen,opt_disc,f_optimizer,e_optimizer] = get_networks(shape, load_model=True, path=pathone)
+# gen,critic,siam,style_encoder,mapping_network, [opt_gen,opt_disc,f_optimizer,e_optimizer] = get_networks(shape, load_model=False, path='../content/drive/My Drive/')
 #Training
 
 #n_save = how many epochs between each saving and displaying of results
